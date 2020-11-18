@@ -12,7 +12,8 @@ command = partial(filters.command, prefixes=["!", "/", "."])
 async def yasakmi(client: Client, message: Message) -> None:
     if len(message.command) > 2 or len(message.command) == 1:
         await message.reply_text(
-            text="Komuttan sonra yasinizi girin..\n\n Orn: /yasakmi 34", quote=True
+            text="`Komuttan hemen sonra yaşınızı giriniz..`\n`Örnek: /yasakmi 34`",
+            quote=True,
         )
         return
 
@@ -39,14 +40,16 @@ async def yasakmi(client: Client, message: Message) -> None:
         )
     if age < 5:
         await message.reply_text(
-            text="Velet daha yolda yuruyemiyorsun ne disari cikmasi :D", quote=True
+            text="Velet daha yolda yürüyemiyorsun ne dışarı çıkması 😂", quote=True
         )
 
     elif age > 90:
-        await message.reply_text(text="Mezardan mi kalkacaksin?", quote=True)
+        await message.reply_text(text="Mezardan mı kalkacaksın? ⚰️", quote=True)
 
     elif canGoOut(age):
-        await message.reply_text(text="Evet disari cikabilirsin", quote=True)
+        await message.reply_text(text="Evet şuanda dışarı çıkabilirsin 😍", quote=True)
 
     else:
-        await message.reply_text(text="Cikamazsin", quote=True)
+        await message.reply_text(
+            text="Maalesef bu saatte dışarı çıkamazsın 😔", quote=True
+        )
