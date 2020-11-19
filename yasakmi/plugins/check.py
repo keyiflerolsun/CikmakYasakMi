@@ -1,55 +1,85 @@
 from functools import partial
 from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram.types import Message, CallbackQuery
 from yasakmi.BotConfig import YasakMi
-from yasakmi.utils.utils import canGoOut
+from yasakmi.utils.helpers import canGoOut
+from yasakmi.utils.queries import History
+from datetime import datetime
+from pyrogram.types import (
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    ReplyKeyboardRemove,
+)
 import logging
 
 command = partial(filters.command, prefixes=["!", "/", "."])
+history = History()
+logging.basicConfig(
+    filename="app.log", format="%(asctime)s - %(message)s", level=logging.INFO
+)
+
+ageButton = InlineKeyboardMarkup(
+    [
+        [InlineKeyboardButton(text="20'den Küçük", callback_data="kid")],
+        [InlineKeyboardButton(text="20 ile 65 Arası", callback_data="adult")],
+        [InlineKeyboardButton(text="65'ten Büyük", callback_data="old")],
+    ]
+)
+
+workButton = InlineKeyboardMarkup(
+    [
+        [InlineKeyboardButton(text="Çalışıyorum", callback_data="yes")],
+        [InlineKeyboardButton(text="Çalışmıyorum", callback_data="no")],
+    ]
+)
+
+ageFilter = filters.create(lambda _, __, query: query.data in ["kid", "adult", "old"])
+workFilter = filters.create(lambda _, __, query: query.data in ["yes", "no"])
 
 
-@YasakMi.on_message(command("yasakmi"))
-async def yasakmi(client: Client, message: Message) -> None:
-    if len(message.command) > 2 or len(message.command) == 1:
-        await message.reply_text(
-            text="`Komuttan hemen sonra yaşınızı giriniz..`\n`Örnek: /yasakmi 34`",
-            quote=True,
-        )
-        return
-
-    age_input: str = message.command[1]
-
-    if age_input.isdigit():
-        age: int = int(age_input)
-
-    else:
-        return
-
-    logging.basicConfig(
-        filename="app.log", format="%(asctime)s - %(message)s", level=logging.INFO
+@YasakMi.on_message(command("start"))
+async def start(client: Client, message: Message) -> None:
+    history.add_user(message.from_user.id)
+    await message.reply(
+        text=f"Merhaba {message.from_user.first_name}, şuan dışarı çıkabiliyor musun öğrenmek için yaş aralığını seçerek başlayabilirsin 😬",
+        reply_markup=ageButton,
     )
 
-    if message.from_user.username:
-        logging.info(
-            f"ID: {message.from_user.id} | UserName: {message.from_user.username} | Name: {message.from_user.first_name}"
-        )
 
+@YasakMi.on_callback_query(ageFilter)
+async def askWork(client: Client, callback: CallbackQuery) -> None:
+    history.add_data(callback.from_user.id, callback.data)
+    await callback.edit_message_text(
+        text=f"Peki çalışıyor musun?", reply_markup=workButton
+    )
+
+
+@YasakMi.on_callback_query(workFilter)
+async def yasakmi(client: Client, callback: CallbackQuery) -> None:
+    history.add_data(callback.from_user.id, callback.data)
+
+    age, work = history.get_data(callback.from_user.id)
+
+    if age == "kid":
+        age = 7
+    elif age == "adult":
+        age = 25
     else:
-        logging.info(
-            f"ID: {message.from_user.id} | UserName: {None} | Name: {message.from_user.first_name}"
-        )
-    if age < 5:
-        await message.reply_text(
-            text="Velet daha yolda yürüyemiyorsun ne dışarı çıkması 😂", quote=True
-        )
+        age = 70
 
-    elif age > 90:
-        await message.reply_text(text="Mezardan mı kalkacaksın? ⚰️", quote=True)
-
-    elif canGoOut(age):
-        await message.reply_text(text="Evet şuanda dışarı çıkabilirsin 😍", quote=True)
-
+    work = True if work == "yes" else False
+    if canGoOut(datetime.now(), work, age):
+        text = f"Evet dışarı çıkabilirsin 😍🏃‍♂️"
     else:
-        await message.reply_text(
-            text="Maalesef bu saatte dışarı çıkamazsın 😔", quote=True
-        )
+        text = f"Hayır dışarı çıkamazsın ama @koyumuhendis grubuna gelebilirsin 😇"
+
+    try:
+        uname = callback.from_user.username
+
+    except NameError:
+        uname = None
+
+    logging.info(
+        f"ID: {callback.from_user.id} | UserName: {uname} | Name: {callback.from_user.first_name}"
+    )
+    await callback.edit_message_text(text=text, reply_markup=ReplyKeyboardRemove())
