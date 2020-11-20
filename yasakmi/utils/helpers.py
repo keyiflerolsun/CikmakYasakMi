@@ -15,13 +15,13 @@ def canGoOut(time: datetime, work: bool, age: int) -> bool:
         return True
 
     elif not isWeekend(time) and not work:
-        if age < 20 and 13 < time.hour < 16:
+        if age < 20 and 13 <= time.hour < 16:
             return True
 
-        elif age >= 65 and 10 < time.hour < 13:
+        elif age >= 65 and 10 <= time.hour < 13:
             return True
 
-        elif 20 < age < 65:
+        elif 20 <= age < 65:
             return True
 
         else:
@@ -32,7 +32,7 @@ def canGoOut(time: datetime, work: bool, age: int) -> bool:
             return True
 
         else:
-            if 10 < time.hour < 20:
+            if 10 <= time.hour < 20:
                 return True
 
             else:
