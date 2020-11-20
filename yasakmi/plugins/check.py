@@ -2,42 +2,37 @@ from functools import partial
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery
 from yasakmi.BotConfig import YasakMi
-from yasakmi.utils.helpers import canGoOut
-from yasakmi.utils.queries import History
-from datetime import datetime
-from pyrogram.types import (
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
-    ReplyKeyboardRemove,
+from yasakmi.utils.helpers import (
+    canGoOut,
+    ageButton,
+    workButton,
+    contactButton,
+    ageFilter,
+    workFilter,
 )
+from yasakmi.utils.queries import History
+from yasakmi.utils.gifs import gifs
+from datetime import datetime
+
 import logging
+import random
 
 command = partial(filters.command, prefixes=["!", "/", "."])
 history = History()
 logging.basicConfig(
-    filename="app.log", format="%(asctime)s - %(message)s", level=logging.INFO
+    filename="info.log", format="%(asctime)s - %(message)s", level=logging.INFO
 )
 
-ageButton = InlineKeyboardMarkup(
-    [
-        [InlineKeyboardButton(text="20'den Küçük", callback_data="kid")],
-        [InlineKeyboardButton(text="20 ile 65 Arası", callback_data="adult")],
-        [InlineKeyboardButton(text="65'ten Büyük", callback_data="old")],
-    ]
-)
-
-workButton = InlineKeyboardMarkup(
-    [
-        [InlineKeyboardButton(text="Çalışıyorum", callback_data="yes")],
-        [InlineKeyboardButton(text="Çalışmıyorum", callback_data="no")],
-    ]
-)
-
-ageFilter = filters.create(lambda _, __, query: query.data in ["kid", "adult", "old"])
-workFilter = filters.create(lambda _, __, query: query.data in ["yes", "no"])
+# logger = logging.basicConfig(filename="app.log", level=logging.WARNING)
+log = logging.getLogger("WARNING")
+log.setLevel(logging.WARNING)
+fh = logging.FileHandler("app.log")
+formatter = logging.Formatter("%(levelname)s - %(message)s")
+fh.setFormatter(formatter)
+log.addHandler(fh)
 
 
-@YasakMi.on_message(command("start"))
+@YasakMi.on_message(command("start") and filters.private)
 async def start(client: Client, message: Message) -> None:
     history.add_user(message.from_user.id)
     await message.reply(
@@ -56,6 +51,7 @@ async def askWork(client: Client, callback: CallbackQuery) -> None:
 
 @YasakMi.on_callback_query(workFilter)
 async def yasakmi(client: Client, callback: CallbackQuery) -> None:
+
     history.add_data(callback.from_user.id, callback.data)
 
     age, work = history.get_data(callback.from_user.id)
@@ -68,18 +64,37 @@ async def yasakmi(client: Client, callback: CallbackQuery) -> None:
         age = 70
 
     work = True if work == "yes" else False
+
+    await client.delete_messages(
+        chat_id=callback.message.chat.id, message_ids=[callback.message.message_id]
+    )
+
     if canGoOut(datetime.now(), work, age):
-        text = f"Evet dışarı çıkabilirsin 😍🏃‍♂️"
+        # text = f"Evet dışarı çıkabilirsin 😍🏃‍♂️"
+        gif = random.choice(gifs["yes"])
+
+        await client.send_animation(
+            chat_id=callback.message.chat.id,
+            animation=gif["gif"],
+            caption=f"{gif['text']}\n\nDışarı çıkabiliyorsun ama soruların olursa gruptan yazabilir veya daha sonra botun kaynak kodlarını inceleyebilirsin 😇",
+            reply_markup=contactButton,
+        )
     else:
-        text = f"Hayır dışarı çıkamazsın ama @koyumuhendis grubuna gelebilirsin 😇"
+        # text = f"Hayır dışarı çıkamazsın ama @koyumuhendis grubuna gelebilirsin 😇"
+        gif = random.choice(gifs["no"])
+        await client.send_animation(
+            chat_id=callback.message.chat.id,
+            animation=gif["gif"],
+            caption=f"{gif['text']}\n\nEvde canın sıkılmasın. Soruların olursa gruptan yazabilir veya botun kaynak kodlarını inceleyebilirsin 😇",
+            reply_markup=contactButton,
+        )
 
     try:
         uname = callback.from_user.username
 
     except NameError:
         uname = None
-
-    logging.info(
+    log.warning(
         f"ID: {callback.from_user.id} | UserName: {uname} | Name: {callback.from_user.first_name}"
     )
-    await callback.edit_message_text(text=text, reply_markup=ReplyKeyboardRemove())
+    # await callback.edit_message_text(text=text, reply_markup=ReplyKeyboardRemove())

@@ -1,4 +1,10 @@
 from datetime import datetime
+from pyrogram.types import (
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    ReplyKeyboardRemove,
+)
+from pyrogram import filters
 
 
 def isWeekend(date: datetime) -> bool:
@@ -37,3 +43,33 @@ def canGoOut(time: datetime, work: bool, age: int) -> bool:
 
             else:
                 return False
+
+
+ageButton = InlineKeyboardMarkup(
+    [
+        [InlineKeyboardButton(text="20'den Küçük", callback_data="kid")],
+        [InlineKeyboardButton(text="20 ile 65 Arası", callback_data="adult")],
+        [InlineKeyboardButton(text="65'ten Büyük", callback_data="old")],
+    ]
+)
+
+workButton = InlineKeyboardMarkup(
+    [
+        [InlineKeyboardButton(text="Çalışıyorum", callback_data="yes")],
+        [InlineKeyboardButton(text="Çalışmıyorum", callback_data="no")],
+    ]
+)
+
+contactButton = InlineKeyboardMarkup(
+    [
+        [InlineKeyboardButton(text="Mühendis Köyü 🏠", url="https://t.me/koyumuhendis")],
+        [
+            InlineKeyboardButton(
+                text="Github 💻", url="https://github.com/ahmetveburak/CikmakYasakMi"
+            )
+        ],
+    ]
+)
+
+ageFilter = filters.create(lambda _, __, query: query.data in ["kid", "adult", "old"])
+workFilter = filters.create(lambda _, __, query: query.data in ["yes", "no"])
