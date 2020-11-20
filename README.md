@@ -1,5 +1,6 @@
 # Telegram Yasak Kontrol Botu :D
 
+[Yasak mı? Telegram Botu](https://t.me/yasakmibot)
 
 Kurulum:
 
