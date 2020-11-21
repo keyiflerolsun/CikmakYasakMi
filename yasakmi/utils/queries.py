@@ -15,7 +15,7 @@ class History:
         self.hist[uid]["query"] = self.hist[uid]["query"][0:-2]
 
     def get_data(self, uid: int) -> list:
-        return [self.hist[uid]["query"][0], self.hist[uid]["query"][1]]
+        return [self.hist[uid]["query"][0], self.hist[uid]["query"][1] if len(self.hist[uid]["query"]) > 1 else None]
 
     def print_data(self) -> None:
         print(self.hist)
