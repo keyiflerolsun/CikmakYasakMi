@@ -17,5 +17,5 @@ class History:
     def get_data(self, uid: int) -> list:
         return [self.hist[uid]["query"][0], self.hist[uid]["query"][1]]
 
-    def print_data(self, uid: int) -> None:
+    def print_data(self) -> None:
         print(self.hist)
